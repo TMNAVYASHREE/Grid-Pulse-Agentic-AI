@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grid Pulse — Demand-Response Agentic AI</title>
+<style>
+  :root{
+    --dark:#0D2B27;
+    --darkcard:#12403A;
+    --darkline:#1F5C52;
+    --light:#F4F7F6;
+    --paper:#FFFFFF;
+    --teal:#1FAF9E;
+    --tealdim:#7FB8AE;
+    --coral:#FF6F59;
+    --amber:#E8B84B;
+    --green:#2E9E5B;
+    --textdark:#0F2420;
+    --muted:#5E6E6A;
+    --mono: 'SFMono-Regular', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    --display: 'Trebuchet MS', 'Segoe UI', sans-serif;
+    --body: Georgia, 'Times New Roman', serif;
+    --ui: -apple-system, 'Segoe UI', Calibri, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--light); color:var(--textdark);
+    font-family:var(--ui); -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+
+  /* ---------------- NAV ---------------- */
+  nav{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 40px; background:rgba(13,43,39,0.92); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--darkline);
+  }
+  .brand{display:flex; align-items:center; gap:10px; color:#fff; font-family:var(--display); font-weight:700; font-size:17px;}
+  .brand .dot{width:10px;height:10px;border-radius:3px;background:var(--teal);}
+  nav .tag{color:var(--tealdim); font-family:var(--mono); font-size:12px; letter-spacing:0.5px;}
+
+  /* ---------------- HERO ---------------- */
+  header.hero{
+    background:var(--dark); color:#fff; padding:64px 40px 84px;
+    position:relative; overflow:hidden;
+  }
+  header.hero::after{
+    content:""; position:absolute; right:-120px; top:-160px; width:520px; height:520px;
+    background:radial-gradient(circle, rgba(31,175,158,0.18) 0%, rgba(31,175,158,0) 70%);
+  }
+  .hero-inner{max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1.15fr 0.85fr; gap:48px; align-items:center; position:relative;}
+  .eyebrow{display:flex; align-items:center; gap:10px; color:var(--teal); font-family:var(--mono); font-size:12.5px; letter-spacing:2px; margin-bottom:18px;}
+  .eyebrow .bar{width:26px;height:3px;background:var(--teal);}
+  h1.hero-title{
+    font-family:var(--display); font-weight:700; font-size:48px; line-height:1.08; margin:0 0 18px;
+  }
+  .hero-title em{font-style:normal; color:var(--teal);}
+  p.hero-sub{
+    font-family:var(--body); font-style:italic; font-size:17px; line-height:1.55; color:#BFE0DA; max-width:520px; margin:0 0 28px;
+  }
+  .hero-meta{display:flex; gap:28px; flex-wrap:wrap;}
+  .hero-meta div{border-left:2px solid var(--darkline); padding-left:12px;}
+  .hero-meta .k{font-family:var(--mono); font-size:10.5px; letter-spacing:1.5px; color:var(--tealdim); text-transform:uppercase;}
+  .hero-meta .v{font-family:var(--display); font-weight:700; font-size:15px; margin-top:3px;}
+
+  /* Gauge (signature element) */
+  .gauge-wrap{display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .gauge-card{
+    background:var(--darkcard); border:1px solid var(--darkline); border-radius:16px; padding:26px 30px 22px;
+    text-align:center; width:100%; max-width:340px;
+  }
+  .gauge-label{font-family:var(--mono); font-size:11px; letter-spacing:1.5px; color:var(--tealdim); margin-bottom:6px;}
+  #stressReadout{font-family:var(--display); font-weight:700; font-size:26px; margin:4px 0 2px;}
+  #stressSub{font-family:var(--mono); font-size:12px; color:var(--tealdim);}
+
+  /* ---------------- SECTION WRAPPER ---------------- */
+  section{padding:72px 40px;}
+  .inner{max-width:1180px; margin:0 auto;}
+  .section-head{margin-bottom:38px;}
+  .kicker{display:flex; align-items:center; gap:10px; color:var(--teal); font-family:var(--mono); font-size:12px; letter-spacing:2px; margin-bottom:10px;}
+  .kicker .bar{width:24px;height:3px;background:var(--teal);}
+  h2{font-family:var(--display); font-weight:700; font-size:30px; margin:0 0 10px; color:var(--textdark);}
+  .section-desc{font-family:var(--body); font-style:italic; color:var(--muted); max-width:640px; font-size:15px; line-height:1.5; margin:0;}
+  section.on-dark h2{color:#fff;}
+  section.on-dark .section-desc{color:#BFE0DA;}
+  section.on-dark{background:var(--dark);}
+
+  /* ---------------- CONTROL DECK ---------------- */
+  .deck{display:grid; grid-template-columns:1.3fr 1fr; gap:32px; align-items:start;}
+  .controls{background:var(--paper); border:1px solid #E1E9E6; border-radius:14px; padding:28px 30px;}
+  .control-row{margin-bottom:26px;}
+  .control-row:last-child{margin-bottom:0;}
+  .control-row label{display:flex; justify-content:space-between; font-family:var(--ui); font-size:13.5px; font-weight:700; margin-bottom:8px;}
+  .control-row label span.val{font-family:var(--mono); color:var(--teal); font-weight:700;}
+  input[type=range]{
+    width:100%; -webkit-appearance:none; height:6px; border-radius:3px;
+    background:#DCE7E4; outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+    background:var(--teal); border:3px solid #fff; box-shadow:0 0 0 1px var(--teal); cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%; background:var(--teal); border:3px solid #fff; box-shadow:0 0 0 1px var(--teal); cursor:pointer;
+  }
+  .hint{font-family:var(--ui); font-size:11.5px; color:var(--muted); margin-top:6px;}
+  .btn-row{display:flex; gap:12px; margin-top:30px;}
+  button{
+    font-family:var(--ui); font-weight:700; font-size:13.5px; border:none; border-radius:8px;
+    padding:13px 22px; cursor:pointer; letter-spacing:0.3px; transition:transform .12s ease, opacity .12s ease;
+  }
+  button:active{transform:scale(0.97);}
+  .btn-primary{background:var(--teal); color:#04211C;}
+  .btn-primary:hover{opacity:0.9;}
+  .btn-ghost{background:transparent; color:var(--textdark); border:1.5px solid #D6DFDC;}
+  .btn-ghost:hover{background:#F0F4F3;}
+
+  /* readout card next to controls */
+  .readout{background:var(--dark); border-radius:14px; padding:26px 28px; color:#fff;}
+  .readout .kicker{margin-bottom:14px;}
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px;}
+  .stat-tile{background:var(--darkcard); border-radius:10px; padding:14px 16px;}
+  .stat-tile .num{font-family:var(--mono); font-size:22px; font-weight:700;}
+  .stat-tile .lab{font-family:var(--ui); font-size:10.5px; letter-spacing:0.5px; color:var(--tealdim); margin-top:3px; text-transform:uppercase;}
+
+  /* ---------------- AGENT TRACE (terminal) ---------------- */
+  .trace-wrap{display:grid; grid-template-columns:220px 1fr; gap:0; border-radius:14px; overflow:hidden; border:1px solid var(--darkline);}
+  .trace-steps{background:var(--darkcard); padding:22px 0;}
+  .trace-step{
+    display:flex; align-items:center; gap:12px; padding:14px 22px; font-family:var(--ui); font-size:13px; color:var(--tealdim);
+    border-left:3px solid transparent; opacity:0.55; transition:all .25s ease;
+  }
+  .trace-step.active{opacity:1; color:#fff; border-left-color:var(--teal); background:rgba(31,175,158,0.08);}
+  .trace-step .idx{font-family:var(--mono); font-size:11px; color:var(--teal);}
+  .terminal{
+    background:#081E1B; padding:22px 26px; font-family:var(--mono); font-size:12.5px; color:#B7E8DD;
+    min-height:280px; max-height:340px; overflow-y:auto; line-height:1.7;
+  }
+  .terminal .ln{opacity:0; animation:fadeIn .35s ease forwards;}
+  .terminal .ln .tag{color:var(--teal);}
+  .terminal .placeholder{color:#3E6B62; font-style:italic;}
+  @keyframes fadeIn{ to{opacity:1;} }
+
+  /* ---------------- CAMPAIGN PLAN OUTPUT ---------------- */
+  .plan-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px;}
+  .plan-tile{background:var(--paper); border:1px solid #E1E9E6; border-radius:12px; padding:20px 22px;}
+  .plan-tile .num{font-family:var(--display); font-weight:700; font-size:26px;}
+  .plan-tile .lab{font-family:var(--ui); font-size:11px; letter-spacing:0.5px; color:var(--muted); text-transform:uppercase; margin-top:4px;}
+  .badge{display:inline-block; padding:4px 10px; border-radius:20px; font-family:var(--mono); font-size:10.5px; font-weight:700; letter-spacing:0.5px;}
+  .badge.low{background:#E4F3EC; color:var(--green);}
+  .badge.mod{background:#FBF0DA; color:#9C7317;}
+  .badge.high{background:#FDE7E3; color:#C24B37;}
+  .badge.crit{background:#FCDAD3; color:#B93923;}
+
+  table{width:100%; border-collapse:collapse; background:var(--paper); border-radius:12px; overflow:hidden; border:1px solid #E1E9E6;}
+  thead tr{background:#EFF4F2;}
+  th{text-align:left; font-family:var(--ui); font-size:11px; letter-spacing:0.5px; text-transform:uppercase; color:var(--muted); padding:12px 16px;}
+  td{padding:12px 16px; font-family:var(--ui); font-size:13px; border-top:1px solid #EEF2F1;}
+  tr.cust-row{cursor:pointer;}
+  tr.cust-row:hover{background:#FAFCFB;}
+  .seg-tag{font-family:var(--mono); font-size:10.5px; padding:2px 8px; border-radius:5px; background:#EAF6F3; color:var(--teal); font-weight:700;}
+  .notif-row td{background:#081E1B; color:#B7E8DD; font-family:var(--mono); font-size:11.5px; padding:16px 22px; line-height:1.6; white-space:pre-wrap; display:none;}
+  .notif-row.open td{display:table-cell;}
+
+  .empty-state{
+    border:1.5px dashed #D6DFDC; border-radius:14px; padding:48px; text-align:center; color:var(--muted);
+    font-family:var(--body); font-style:italic; font-size:15px;
+  }
+
+  .download-row{display:flex; gap:12px; margin-top:24px;}
+
+  /* ---------------- FOOTER ---------------- */
+  footer{background:var(--dark); color:var(--tealdim); padding:30px 40px; text-align:center; font-family:var(--mono); font-size:11.5px; border-top:1px solid var(--darkline);}
+
+  @media (max-width:900px){
+    .hero-inner{grid-template-columns:1fr;}
+    .deck{grid-template-columns:1fr;}
+    .trace-wrap{grid-template-columns:1fr;}
+    .plan-stats{grid-template-columns:1fr 1fr;}
+    h1.hero-title{font-size:34px;}
+    nav{padding:14px 20px;} header.hero{padding:44px 20px 60px;} section{padding:52px 20px;}
+  }
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--darkline); border-radius:4px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span class="dot"></span> Grid Pulse</div>
+  <div class="tag">PS129 · DEMAND-RESPONSE AGENTIC AI</div>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow"><span class="bar"></span> LIVE AGENT SIMULATION</div>
+      <h1 class="hero-title">The grid talks.<br><em>This agent listens</em> — and acts.</h1>
+      <p class="hero-sub">Adjust real-time grid conditions below and watch the agent perceive stress, decide who to recruit, and draft each notice — all in your browser.</p>
+      <div class="hero-meta">
+        <div><div class="k">Sub-domain</div><div class="v">Demand Response</div></div>
+        <div><div class="k">AI Focus</div><div class="v">Agentic AI</div></div>
+        <div><div class="k">Function</div><div class="v">Grid Flexibility</div></div>
+      </div>
+    </div>
+    <div class="gauge-wrap">
+      <div class="gauge-card">
+        <div class="gauge-label">FORECAST RESERVE MARGIN</div>
+        <svg id="gaugeSvg" width="220" height="130" viewBox="0 0 220 130"></svg>
+        <div id="stressReadout">—</div>
+        <div id="stressSub">adjust the controls to begin</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="controls-section">
+  <div class="inner">
+    <div class="section-head">
+      <div class="kicker"><span class="bar"></span> STEP 1 · PERCEIVE</div>
+      <h2>Set the grid conditions</h2>
+      <p class="section-desc">These four inputs are exactly what the agent reads before it decides anything — capacity, current draw, tomorrow's forecast peak, and the utility's safety margin.</p>
+    </div>
+    <div class="deck">
+      <div class="controls">
+        <div class="control-row">
+          <label>Grid capacity <span class="val" id="capVal">1000 MW</span></label>
+          <input type="range" id="capSlider" min="600" max="1400" step="10" value="1000">
+          <div class="hint">Total generation + import capacity available to serve load.</div>
+        </div>
+        <div class="control-row">
+          <label>Current load <span class="val" id="loadVal">880 MW</span></label>
+          <input type="range" id="loadSlider" min="400" max="1300" step="10" value="880">
+          <div class="hint">What the grid is drawing right now.</div>
+        </div>
+        <div class="control-row">
+          <label>Forecast peak <span class="val" id="peakVal">945 MW</span></label>
+          <input type="range" id="peakSlider" min="400" max="1350" step="10" value="945">
+          <div class="hint">Expected peak load in the next event window.</div>
+        </div>
+        <div class="control-row">
+          <label>Reserve margin target <span class="val" id="marginVal">8%</span></label>
+          <input type="range" id="marginSlider" min="3" max="20" step="1" value="8">
+          <div class="hint">Minimum safety buffer the utility wants to protect.</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" id="runBtn">Run the agent →</button>
+          <button class="btn-ghost" id="reshuffleBtn">Reshuffle customer pool</button>
+        </div>
+      </div>
+      <div class="readout">
+        <div class="kicker" style="color:var(--tealdim)"><span class="bar" style="background:var(--tealdim)"></span> CUSTOMER POOL</div>
+        <div class="stat-grid">
+          <div class="stat-tile"><div class="num" id="poolTotal">40</div><div class="lab">Enrolled pool</div></div>
+          <div class="stat-tile"><div class="num" id="poolFatigue">—</div><div class="lab">In cooldown</div></div>
+          <div class="stat-tile"><div class="num" id="poolOptout">—</div><div class="lab">Opted out</div></div>
+          <div class="stat-tile"><div class="num" id="poolEligible">—</div><div class="lab">Eligible now</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="on-dark" id="trace-section">
+  <div class="inner">
+    <div class="section-head">
+      <div class="kicker"><span class="bar"></span> STEP 2 · DECIDE</div>
+      <h2>Watch the agent reason</h2>
+      <p class="section-desc">Every decision is logged as it happens — no black box. This is the same trace the Python prototype prints to console.</p>
+    </div>
+    <div class="trace-wrap">
+      <div class="trace-steps">
+        <div class="trace-step" data-step="0"><span class="idx">01</span> Perceive grid</div>
+        <div class="trace-step" data-step="1"><span class="idx">02</span> Classify stress</div>
+        <div class="trace-step" data-step="2"><span class="idx">03</span> Filter eligible</div>
+        <div class="trace-step" data-step="3"><span class="idx">04</span> Recruit customers</div>
+        <div class="trace-step" data-step="4"><span class="idx">05</span> Draft notices</div>
+      </div>
+      <div class="terminal" id="terminal">
+        <div class="placeholder">// press "Run the agent" above to start the trace…</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="output-section">
+  <div class="inner">
+    <div class="section-head">
+      <div class="kicker"><span class="bar"></span> STEP 3 · ACT</div>
+      <h2>Campaign plan output</h2>
+      <p class="section-desc">The agent's deliverable — who was recruited, what they pledged, and the exact notice each one receives. Click a row to preview its notification.</p>
+    </div>
+    <div id="planEmpty" class="empty-state">No campaign plan yet — run the agent above to generate one.</div>
+    <div id="planResults" style="display:none;">
+      <div class="plan-stats">
+        <div class="plan-tile"><div class="num" id="statStress">—</div><div class="lab">Grid stress</div></div>
+        <div class="plan-tile"><div class="num" id="statEligible">—</div><div class="lab">Eligible / pool</div></div>
+        <div class="plan-tile"><div class="num" id="statPledged">—</div><div class="lab">Pledged reduction</div></div>
+        <div class="plan-tile"><div class="num" id="statTarget">—</div><div class="lab">Recruitment target</div></div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Customer</th><th>Segment</th><th>Target (kW)</th><th>Last event</th></tr>
+        </thead>
+        <tbody id="planTableBody"></tbody>
+      </table>
+      <div class="download-row">
+        <button class="btn-primary" id="downloadJson">Download plan.json</button>
+        <button class="btn-ghost" id="downloadMd">Download plan.md</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  DEMAND-RESPONSE AGENTIC AI · PS129 · ENERGY &amp; UTILITIES · T M NAVYA SHREE
+</footer>
+
+<script>
+/* ============================================================
+   Seeded PRNG so the customer pool is reproducible per session
+   ============================================================ */
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+let seed = 7;
+let rand = mulberry32(seed);
+
+const SEGMENTS = ["Residential","Commercial","Industrial"];
+const SEGMENT_RANGE = {
+  Residential:[0.5,3], Commercial:[5,40], Industrial:[50,300]
+};
+const MIN_DAYS_BETWEEN_EVENTS = 4;
+
+function generateCustomers(n=40){
+  rand = mulberry32(seed);
+  const customers = [];
+  for(let i=1;i<=n;i++){
+    const r = rand();
+    const seg = r < 0.5 ? "Residential" : (r < 0.8 ? "Commercial" : "Industrial");
+    const [lo,hi] = SEGMENT_RANGE[seg];
+    const lastEventDays = [2,4,5,7,10,15,20,45,90,120][Math.floor(rand()*10)];
+    customers.push({
+      id: "C"+String(i).padStart(3,"0"),
+      name: seg+" Account "+String(i).padStart(3,"0"),
+      segment: seg,
+      enrolled: rand() > 0.15,
+      reductionKw: +(lo + rand()*(hi-lo)).toFixed(1),
+      lastEventDays,
+      optedOut: rand() < 0.05
+    });
+  }
+  return customers;
+}
+
+let customers = generateCustomers(40);
+
+/* ============================================================
+   Agent logic — mirrors the Python prototype
+   ============================================================ */
+function classifyStress(capacity, currentLoad, forecastPeak, marginTargetPct){
+  const marginPct = 100 * (capacity - forecastPeak) / capacity;
+  let level;
+  if(marginPct <= 2) level = "Critical";
+  else if(marginPct < marginTargetPct*0.6) level = "High";
+  else if(marginPct < marginTargetPct) level = "Moderate";
+  else level = "Low";
+  return {level, marginPct};
+}
+
+function selectCustomers(customers, grid, stressLevel){
+  const reserveFloor = grid.capacity * (1 - grid.marginTarget/100);
+  const reductionNeededMw = Math.max(0, grid.forecastPeak - reserveFloor);
+  const multiplier = {Low:0, Moderate:0.5, High:0.8, Critical:1.0}[stressLevel];
+  const targetKw = reductionNeededMw * 1000 * Math.max(multiplier, 0.3);
+
+  const eligible = customers.filter(c => c.enrolled && !c.optedOut && c.lastEventDays >= MIN_DAYS_BETWEEN_EVENTS);
+  const sorted = [...eligible].sort((a,b) => b.reductionKw - a.reductionKw);
+
+  const selected = [];
+  let pledged = 0;
+  for(const c of sorted){
+    if(pledged >= targetKw && stressLevel !== "Critical") break;
+    selected.push(c);
+    pledged += c.reductionKw;
+    if(stressLevel === "Critical" && pledged >= targetKw*1.15) break;
+  }
+  return {selected, pledged, targetKw, reductionNeededMw, eligibleCount: eligible.length};
+}
+
+function draftNotification(customer, stressLevel, eventWindow){
+  const urgency = {
+    Critical:"URGENT GRID ALERT", High:"Grid Stress Notice",
+    Moderate:"Demand Response Request", Low:"Optional Energy Savings Opportunity"
+  }[stressLevel];
+  const segCopy = {
+    Residential:"we're asking enrolled households to shift non-essential appliance use (laundry, dishwashing, EV charging) out of the event window",
+    Commercial:"we're asking your facility to reduce non-critical HVAC and lighting load during the event window",
+    Industrial:"we're requesting a temporary curtailment of flexible production load during the event window, per your DR service agreement"
+  }[customer.segment];
+  return `${urgency}: ${customer.name}\nDear ${customer.name},\nDue to elevated grid demand, ${segCopy}. Event window: ${eventWindow}. Your target contribution: ${customer.reductionKw.toFixed(1)} kW.\nThank you for participating in the demand response program.`;
+}
+
+function nextEventWindow(stressLevel){
+  const now = new Date();
+  const hoursAhead = (stressLevel === "Critical" || stressLevel === "High") ? 1 : 3;
+  const start = new Date(now.getTime() + hoursAhead*3600*1000);
+  start.setMinutes(0,0,0);
+  const end = new Date(start.getTime() + 2*3600*1000);
+  const fmt = d => `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  return `${fmt(start)} - ${fmt(end)}`;
+}
+
+/* ============================================================
+   UI wiring
+   ============================================================ */
+const capSlider = document.getElementById("capSlider");
+const loadSlider = document.getElementById("loadSlider");
+const peakSlider = document.getElementById("peakSlider");
+const marginSlider = document.getElementById("marginSlider");
+const capVal = document.getElementById("capVal");
+const loadVal = document.getElementById("loadVal");
+const peakVal = document.getElementById("peakVal");
+const marginVal = document.getElementById("marginVal");
+
+function currentGrid(){
+  return {
+    capacity: +capSlider.value,
+    currentLoad: +loadSlider.value,
+    forecastPeak: +peakSlider.value,
+    marginTarget: +marginSlider.value
+  };
+}
+
+function drawGauge(marginPct, level){
+  const svg = document.getElementById("gaugeSvg");
+  const cx=110, cy=110, r=90;
+  const pct = Math.max(0, Math.min(1, (marginPct+5)/25)); // map -5%..20% to 0..1
+  const angle = Math.PI * (1 - pct); // 180 (left, low) -> 0 (right, high)
+  const x2 = cx + r*Math.cos(angle);
+  const y2 = cy - r*Math.sin(angle);
+  const colorMap = {Low:"#2E9E5B", Moderate:"#E8B84B", High:"#FF6F59", Critical:"#C24B37"};
+  const color = colorMap[level] || "#1FAF9E";
+
+  svg.innerHTML = `
+    <path d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="#1F5C52" stroke-width="14" stroke-linecap="round"/>
+    <path d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round"
+      stroke-dasharray="${pct*283} 283" />
+    <line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="6" fill="#fff"/>
+  `;
+}
+
+function updateGaugeLive(){
+  const g = currentGrid();
+  capVal.textContent = g.capacity + " MW";
+  loadVal.textContent = g.currentLoad + " MW";
+  peakVal.textContent = g.forecastPeak + " MW";
+  marginVal.textContent = g.marginTarget + "%";
+
+  const {level, marginPct} = classifyStress(g.capacity, g.currentLoad, g.forecastPeak, g.marginTarget);
+  drawGauge(marginPct, level);
+  document.getElementById("stressReadout").textContent = level + " stress";
+  document.getElementById("stressSub").textContent = `${marginPct.toFixed(1)}% forecast margin · target ${g.marginTarget}%`;
+
+  const eligible = customers.filter(c => c.enrolled && !c.optedOut && c.lastEventDays >= MIN_DAYS_BETWEEN_EVENTS);
+  const fatigued = customers.filter(c => c.enrolled && !c.optedOut && c.lastEventDays < MIN_DAYS_BETWEEN_EVENTS);
+  const optedOut = customers.filter(c => c.optedOut);
+  document.getElementById("poolTotal").textContent = customers.length;
+  document.getElementById("poolFatigue").textContent = fatigued.length;
+  document.getElementById("poolOptout").textContent = optedOut.length;
+  document.getElementById("poolEligible").textContent = eligible.length;
+}
+
+[capSlider, loadSlider, peakSlider, marginSlider].forEach(el => el.addEventListener("input", updateGaugeLive));
+
+document.getElementById("reshuffleBtn").addEventListener("click", () => {
+  seed = Math.floor(Math.random()*100000);
+  customers = generateCustomers(40);
+  updateGaugeLive();
+  resetTrace();
+});
+
+function resetTrace(){
+  document.querySelectorAll(".trace-step").forEach(s => s.classList.remove("active"));
+  document.getElementById("terminal").innerHTML = '<div class="placeholder">// press "Run the agent" above to start the trace…</div>';
+  document.getElementById("planEmpty").style.display = "block";
+  document.getElementById("planResults").style.display = "none";
+}
+
+function appendLine(html, delay){
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const term = document.getElementById("terminal");
+      const div = document.createElement("div");
+      div.className = "ln";
+      div.innerHTML = html;
+      term.appendChild(div);
+      term.scrollTop = term.scrollHeight;
+      resolve();
+    }, delay);
+  });
+}
+
+function activateStep(i){
+  document.querySelectorAll(".trace-step").forEach(s => s.classList.remove("active"));
+  const el = document.querySelector(`.trace-step[data-step="${i}"]`);
+  if(el) el.classList.add("active");
+}
+
+async function runAgent(){
+  const runBtn = document.getElementById("runBtn");
+  runBtn.disabled = true; runBtn.textContent = "Running…";
+  document.getElementById("terminal").innerHTML = "";
+  document.getElementById("planEmpty").style.display = "block";
+  document.getElementById("planResults").style.display = "none";
+
+  const g = currentGrid();
+  const grid = {capacity:g.capacity, forecastPeak:g.forecastPeak, marginTarget:g.marginTarget};
+
+  activateStep(0);
+  await appendLine(`<span class="tag">[perceive]</span> load=${g.currentLoad}MW, forecast_peak=${g.forecastPeak}MW, capacity=${g.capacity}MW`, 250);
+  const {level, marginPct} = classifyStress(g.capacity, g.currentLoad, g.forecastPeak, g.marginTarget);
+  await appendLine(`<span class="tag">[perceive]</span> forecast margin = ${marginPct.toFixed(1)}% (target ${g.marginTarget}%)`, 500);
+
+  activateStep(1);
+  await appendLine(`<span class="tag">[classify]</span> grid stress classified as <b>${level.toUpperCase()}</b>`, 550);
+
+  activateStep(2);
+  const eligible = customers.filter(c => c.enrolled && !c.optedOut && c.lastEventDays >= MIN_DAYS_BETWEEN_EVENTS);
+  await appendLine(`<span class="tag">[filter]</span> eligibility check: ${eligible.length}/${customers.length} pass (enrolled, not opted out, not fatigued)`, 550);
+
+  activateStep(3);
+  const result = selectCustomers(customers, grid, level);
+  await appendLine(`<span class="tag">[recruit]</span> target = ${result.targetKw.toFixed(0)} kW · recruiting from ${eligible.length} eligible customers, ranked by capacity`, 550);
+  await appendLine(`<span class="tag">[recruit]</span> selected ${result.selected.length} customers, pledged ${result.pledged.toFixed(1)} kW`, 550);
+
+  activateStep(4);
+  const eventWindow = nextEventWindow(level);
+  const plan = result.selected.map(c => ({...c, notification: draftNotification(c, level, eventWindow)}));
+  await appendLine(`<span class="tag">[draft]</span> drafting ${plan.length} personalized notifications for event window ${eventWindow}…`, 550);
+  await appendLine(`<span class="tag">[done]</span> campaign plan assembled ✓`, 400);
+
+  renderPlan(level, marginPct, eligible.length, result, plan, eventWindow);
+
+  runBtn.disabled = false; runBtn.textContent = "Run the agent →";
+}
+
+function renderPlan(level, marginPct, eligibleCount, result, plan, eventWindow){
+  document.getElementById("planEmpty").style.display = "none";
+  document.getElementById("planResults").style.display = "block";
+
+  const badgeClass = {Low:"low", Moderate:"mod", High:"high", Critical:"crit"}[level];
+  document.getElementById("statStress").innerHTML = `<span class="badge ${badgeClass}">${level.toUpperCase()}</span>`;
+  document.getElementById("statEligible").textContent = `${eligibleCount} / ${customers.length}`;
+  document.getElementById("statPledged").textContent = `${result.pledged.toFixed(0)} kW`;
+  document.getElementById("statTarget").textContent = `${result.targetKw.toFixed(0)} kW`;
+
+  const tbody = document.getElementById("planTableBody");
+  tbody.innerHTML = "";
+  plan.forEach((c, idx) => {
+    const row = document.createElement("tr");
+    row.className = "cust-row";
+    row.innerHTML = `
+      <td>${c.name}</td>
+      <td><span class="seg-tag">${c.segment}</span></td>
+      <td>${c.reductionKw.toFixed(1)}</td>
+      <td>${c.lastEventDays}d ago</td>
+    `;
+    const notifRow = document.createElement("tr");
+    notifRow.className = "notif-row";
+    notifRow.innerHTML = `<td colspan="4">${c.notification.replace(/</g,"&lt;")}</td>`;
+    row.addEventListener("click", () => notifRow.classList.toggle("open"));
+    tbody.appendChild(row);
+    tbody.appendChild(notifRow);
+  });
+
+  window._lastPlan = {level, marginPct, eligibleCount, poolSize: customers.length, result, plan, eventWindow};
+}
+
+document.getElementById("runBtn").addEventListener("click", runAgent);
+
+document.getElementById("downloadJson").addEventListener("click", () => {
+  if(!window._lastPlan) return;
+  const p = window._lastPlan;
+  const data = {
+    stress_level: p.level,
+    forecast_margin_pct: +p.marginPct.toFixed(2),
+    eligible_customers: `${p.eligibleCount}/${p.poolSize}`,
+    reduction_target_kw: +p.result.targetKw.toFixed(1),
+    total_pledged_kw: +p.result.pledged.toFixed(1),
+    event_window: p.eventWindow,
+    selected_customers: p.plan.map(c => ({
+      id:c.id, name:c.name, segment:c.segment, reduction_target_kw:c.reductionKw, notification:c.notification
+    }))
+  };
+  downloadFile("demand_response_campaign_plan.json", JSON.stringify(data, null, 2));
+});
+
+document.getElementById("downloadMd").addEventListener("click", () => {
+  if(!window._lastPlan) return;
+  const p = window._lastPlan;
+  let md = `# Demand-Response Campaign Plan\n\n`;
+  md += `**Stress level:** ${p.level}  \n**Forecast margin:** ${p.marginPct.toFixed(1)}%  \n`;
+  md += `**Eligible:** ${p.eligibleCount}/${p.poolSize}  \n**Pledged:** ${p.result.pledged.toFixed(1)} kW / target ${p.result.targetKw.toFixed(0)} kW  \n`;
+  md += `**Event window:** ${p.eventWindow}\n\n## Selected Customers\n\n| Customer | Segment | Target (kW) |\n|---|---|---|\n`;
+  p.plan.forEach(c => { md += `| ${c.name} | ${c.segment} | ${c.reductionKw.toFixed(1)} |\n`; });
+  md += `\n## Notifications\n\n`;
+  p.plan.forEach(c => { md += `### ${c.name}\n\`\`\`\n${c.notification}\n\`\`\`\n\n`; });
+  downloadFile("demand_response_campaign_plan.md", md);
+});
+
+function downloadFile(filename, content){
+  const blob = new Blob([content], {type:"text/plain"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* init */
+updateGaugeLive();
+</script>
+
+</body>
+</html>
